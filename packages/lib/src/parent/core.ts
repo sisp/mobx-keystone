@@ -1,34 +1,31 @@
 import { createAtom, IAtom, observable, ObservableMap, ObservableSet } from "mobx"
 import { AnyModel } from "../model/Model"
 import { assertTweakedObject } from "../tweaker/core"
-import { failure } from "../utils"
+import { failure, objectHiddenProperty } from "../utils"
 import { isRoot, ParentPath } from "./path"
 
 /**
  * @ignore
  */
-export const objectParents = new WeakMap<object, ParentPath<any> | undefined>()
+export const objectParentProp = objectHiddenProperty<ParentPath<any> | undefined>("objectParent")
+
+const objectParentAtomProp = objectHiddenProperty<IAtom>("objectParentAtom")
 
 /**
  * @ignore
  */
-export const objectParentsAtoms = new WeakMap<object, IAtom>()
+export const objectChildrenProp = objectHiddenProperty<ObservableSet<any>>("objectChildren")
 
-/**
- * @ignore
- */
-export const objectChildren = new WeakMap<object, ObservableSet<any>>()
-
-const rootIdCaches = new WeakMap<object, ObservableMap<string, AnyModel>>()
+const rootIdCacheProp = objectHiddenProperty<ObservableMap<string, AnyModel>>("rootIdCache")
 
 /**
  * @ignore
  */
 export function getRootIdCache(root: object): ObservableMap<string, AnyModel> {
-  let cache = rootIdCaches.get(root)
+  let cache = rootIdCacheProp.get(root)
   if (!cache) {
     cache = observable.map()
-    rootIdCaches.set(root, cache)
+    rootIdCacheProp.set(root, cache)
   }
   return cache
 }
@@ -47,7 +44,7 @@ export function resolveModelId<M extends AnyModel>(treeRoot: object, id: string)
     throw failure("a root node was expected")
   }
 
-  let cache = rootIdCaches.get(treeRoot)
+  let cache = rootIdCacheProp.get(treeRoot)
   if (!cache) {
     return undefined
   }
@@ -71,10 +68,10 @@ export function parentPathEquals(
 }
 
 function createParentPathAtom(obj: object) {
-  let atom = objectParentsAtoms.get(obj)
+  let atom = objectParentAtomProp.get(obj)
   if (!atom) {
     atom = createAtom("parentAtom")
-    objectParentsAtoms.set(obj, atom)
+    objectParentAtomProp.set(obj, atom)
   }
   return atom
 }

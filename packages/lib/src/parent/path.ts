@@ -1,5 +1,5 @@
 import { assertTweakedObject } from "../tweaker/core"
-import { objectParents, reportParentPathObserved } from "./core"
+import { objectParentProp, reportParentPathObserved } from "./core"
 
 /**
  * Path from an object to its immediate parent.
@@ -45,7 +45,7 @@ export function getParentPath<T extends object = any>(node: object): ParentPath<
   assertTweakedObject(node, "node")
 
   reportParentPathObserved(node)
-  return objectParents.get(node) as any
+  return objectParentProp.get(node) as any
 }
 
 /**

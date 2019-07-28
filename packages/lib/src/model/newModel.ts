@@ -7,7 +7,7 @@ import { isModelAutoTypeCheckingEnabled } from "../globalConfig/globalConfig"
 import { getInternalSnapshot, linkInternalSnapshot } from "../snapshot/internal"
 import { tweakModel } from "../tweaker/tweakModel"
 import { tweakPlainObject } from "../tweaker/tweakPlainObject"
-import { assertIsObject, makePropReadonly } from "../utils"
+import { assertIsObject, makePropReadonly, objectHiddenProperty } from "../utils"
 import { getModelDataType } from "./getModelDataType"
 import { modelMetadataKey } from "./metadata"
 import { AnyModel, ModelClass } from "./Model"
@@ -124,7 +124,7 @@ export const internalNewModel = action(
     }
 
     // run any extra initializers for the class as needed
-    const initializers = modelClassInitializers.get(modelClass)
+    const initializers = modelClassInitializersProp.get(modelClass)
     if (initializers) {
       initializers.forEach(init => init(modelObj))
     }
@@ -142,7 +142,10 @@ export const internalNewModel = action(
 
 type ModelClassInitializer = (modelInstance: AnyModel) => void
 
-const modelClassInitializers = new WeakMap<ModelClass<AnyModel>, ModelClassInitializer[]>()
+const modelClassInitializersProp = objectHiddenProperty<
+  ModelClassInitializer[],
+  ModelClass<AnyModel>
+>("modelClassInitializers")
 
 /**
  * @ignore
@@ -151,10 +154,10 @@ export function addModelClassInitializer(
   modelClass: ModelClass<AnyModel>,
   init: ModelClassInitializer
 ) {
-  let initializers = modelClassInitializers.get(modelClass)
+  let initializers = modelClassInitializersProp.get(modelClass)
   if (!initializers) {
     initializers = []
-    modelClassInitializers.set(modelClass, initializers)
+    modelClassInitializersProp.set(modelClass, initializers)
   }
   initializers.push(init)
 }

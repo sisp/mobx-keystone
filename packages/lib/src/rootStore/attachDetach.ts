@@ -3,8 +3,9 @@ import { HookAction } from "../action/hookActions"
 import { wrapInAction, wrapModelMethodInActionIfNeeded } from "../action/wrapInAction"
 import { Model } from "../model/Model"
 import { walkTree, WalkTreeMode } from "../parent/walkTree"
+import { objectHiddenProperty } from "../utils"
 
-const onAttachedDisposers = new WeakMap<object, () => void>()
+const onAttachedDisposersProp = objectHiddenProperty<() => void>("onAttachedDisposers")
 
 /**
  * @ignore
@@ -28,7 +29,7 @@ export function attachToRootStore(rootStore: object, child: object): void {
             disposer,
             ActionContextActionType.Sync
           )
-          onAttachedDisposers.set(ch, disposerAction)
+          onAttachedDisposersProp.set(ch, disposerAction)
         }
       }
     },
@@ -43,9 +44,9 @@ export function detachFromRootStore(child: object): void {
   walkTree(
     child,
     ch => {
-      const disposerAction = onAttachedDisposers.get(ch)
+      const disposerAction = onAttachedDisposersProp.get(ch)
       if (disposerAction) {
-        onAttachedDisposers.delete(ch)
+        onAttachedDisposersProp.delete(ch)
         disposerAction.call(ch)
       }
     },

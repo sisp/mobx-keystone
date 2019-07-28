@@ -1,7 +1,13 @@
 import { action, isAction } from "mobx"
 import { getParent, isChildOfParent } from "../parent/path"
 import { assertTweakedObject } from "../tweaker/core"
-import { assertIsFunction, assertIsObject, deleteFromArray, failure } from "../utils"
+import {
+  assertIsFunction,
+  assertIsObject,
+  deleteFromArray,
+  failure,
+  objectHiddenProperty,
+} from "../utils"
 import { ActionContext } from "./context"
 
 /**
@@ -33,11 +39,13 @@ export type ActionMiddlewareDisposer = () => void
 
 type PartialActionMiddleware = Pick<ActionMiddleware, "filter" | "middleware">
 
-const perObjectActionMiddlewares = new WeakMap<object, PartialActionMiddleware[]>()
+const actionMiddlewaresProp = objectHiddenProperty<PartialActionMiddleware[]>("actionMiddlewares")
 
 interface ActionMiddlewaresIterator extends Iterable<PartialActionMiddleware> {}
 
-const perObjectActionMiddlewaresIterator = new WeakMap<object, ActionMiddlewaresIterator>()
+const actionMiddlewaresIteratorProp = objectHiddenProperty<ActionMiddlewaresIterator>(
+  "actionMiddlewaresIterator"
+)
 
 /**
  * @ignore
@@ -53,14 +61,14 @@ export function getActionMiddlewares(obj: object): ActionMiddlewaresIterator {
   // since an array like [a, b, c] will be called like c(b(a())) this means that we need to put
   // the parent object ones at the end of the array
 
-  let iterable = perObjectActionMiddlewaresIterator.get(obj)
+  let iterable = actionMiddlewaresIteratorProp.get(obj)
   if (!iterable) {
     iterable = {
       [Symbol.iterator]() {
         let current: any = obj
 
         function getCurrentIterator() {
-          const objMwares = current ? perObjectActionMiddlewares.get(current) : undefined
+          const objMwares = current ? actionMiddlewaresProp.get(current) : undefined
           if (!objMwares || objMwares.length <= 0) {
             return undefined
           }
@@ -100,7 +108,7 @@ export function getActionMiddlewares(obj: object): ActionMiddlewaresIterator {
         return iterator
       },
     }
-    perObjectActionMiddlewaresIterator.set(obj, iterable)
+    actionMiddlewaresIteratorProp.set(obj, iterable)
   }
   return iterable
 }
@@ -145,10 +153,10 @@ export function addActionMiddleware(mware: ActionMiddleware): ActionMiddlewareDi
 
   const actualMware = { middleware, filter }
 
-  let objMwares = perObjectActionMiddlewares.get(subtreeRoot)!
+  let objMwares = actionMiddlewaresProp.get(subtreeRoot)!
   if (!objMwares) {
     objMwares = [actualMware]
-    perObjectActionMiddlewares.set(subtreeRoot, objMwares)
+    actionMiddlewaresProp.set(subtreeRoot, objMwares)
   } else {
     objMwares.push(actualMware)
   }

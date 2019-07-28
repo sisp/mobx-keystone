@@ -13,7 +13,7 @@ import { setParent } from "../parent/setParent"
 import { InternalPatchRecorder } from "../patch/emitPatch"
 import { getInternalSnapshot, setInternalSnapshot } from "../snapshot/internal"
 import { failure, isPrimitive } from "../utils"
-import { assertCanWrite, runningWithoutSnapshotOrPatches, tweakedObjects } from "./core"
+import { assertCanWrite, runningWithoutSnapshotOrPatches, tweakedObjectProp } from "./core"
 import { tweak } from "./tweak"
 import { runTypeCheckingAfterChange } from "./typeChecking"
 
@@ -31,7 +31,7 @@ export function tweakPlainObject<T>(
     ? originalObj
     : observable.object({}, undefined, observableOptions)
 
-  tweakedObjects.add(tweakedObj)
+  tweakedObjectProp.set(tweakedObj, true)
   setParent(tweakedObj, parentPath)
 
   const standardSn: any = {}

@@ -2,12 +2,14 @@ import { getModelDataType } from "../model/getModelDataType"
 import { AnyModel, ModelClass } from "../model/Model"
 import { modelInfoByClass } from "../model/modelInfo"
 import { assertIsModelClass } from "../model/utils"
-import { failure } from "../utils"
+import { failure, objectHiddenProperty } from "../utils"
 import { IdentityType } from "./schemas"
 import { lateTypeChecker, resolveTypeChecker, TypeChecker } from "./TypeChecker"
 import { TypeCheckError } from "./TypeCheckError"
 
-const cachedModelTypeChecker = new WeakMap<ModelClass<AnyModel>, TypeChecker>()
+const cachedModelTypeCheckerProp = objectHiddenProperty<TypeChecker, ModelClass<AnyModel>>(
+  "cachedModelTypeChecker"
+)
 
 /**
  * A type that represents a model. The type referenced in the model decorator will be used for type checking.
@@ -26,7 +28,7 @@ export function typesModel<M = never>(modelClass: object): IdentityType<M> {
   const modelClazz = modelClass as ModelClass<AnyModel>
   assertIsModelClass(modelClazz, "modelClass")
 
-  const cachedTypeChecker = cachedModelTypeChecker.get(modelClazz)
+  const cachedTypeChecker = cachedModelTypeCheckerProp.get(modelClazz)
   if (cachedTypeChecker) {
     return cachedTypeChecker as any
   }
@@ -63,7 +65,7 @@ export function typesModel<M = never>(modelClass: object): IdentityType<M> {
     )
   }) as any
 
-  cachedModelTypeChecker.set(modelClazz, tc)
+  cachedModelTypeCheckerProp.set(modelClazz, tc)
 
   return tc as any
 }

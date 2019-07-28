@@ -8,22 +8,6 @@ import {
 } from "mobx"
 
 /**
- * @ignore
- */
-export function mapGetOrDefault<K extends object, V>(
-  map: WeakMap<K, V> | Map<K, V>,
-  key: K,
-  def: () => V
-) {
-  if (map.has(key)) {
-    return map.get(key)!
-  }
-  const newValue = def()!
-  map.set(key, newValue)
-  return newValue
-}
-
-/**
  * A mobx-keystone error.
  */
 export class MobxDataModelError extends Error {
@@ -242,5 +226,31 @@ export function logWarning(type: "warn" | "error", msg: string): void {
       break
     default:
       throw failure(`unknown log type - ${type}`)
+  }
+}
+
+/**
+ * @ignore
+ */
+export function objectHiddenProperty<D, O extends object = object>(symbolName: string) {
+  const symbol = Symbol(symbolName)
+
+  return {
+    has(obj: O): boolean {
+      return symbol in obj
+    },
+    get(obj: O): D | undefined {
+      return (obj as any)[symbol]
+    },
+    set(obj: O, data: D | undefined) {
+      if (!(symbol in obj)) {
+        addHiddenProp(obj, symbol, data)
+      } else {
+        ;(obj as any)[symbol] = data
+      }
+    },
+    delete(obj: O) {
+      delete (obj as any)[symbol]
+    },
   }
 }

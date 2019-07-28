@@ -16,7 +16,7 @@ import { InternalPatchRecorder } from "../patch/emitPatch"
 import { Patch } from "../patch/Patch"
 import { getInternalSnapshot, setInternalSnapshot } from "../snapshot/internal"
 import { failure, inDevMode, isPrimitive } from "../utils"
-import { assertCanWrite, runningWithoutSnapshotOrPatches, tweakedObjects } from "./core"
+import { assertCanWrite, runningWithoutSnapshotOrPatches, tweakedObjectProp } from "./core"
 import { tweak } from "./tweak"
 import { runTypeCheckingAfterChange } from "./typeChecking"
 
@@ -37,7 +37,7 @@ export function tweakArray<T extends any[]>(
     tweakedArr.length = originalArr.length
   }
 
-  tweakedObjects.add(tweakedArr)
+  tweakedObjectProp.set(tweakedArr, true)
   setParent(tweakedArr, parentPath)
 
   const standardSn: any[] = []

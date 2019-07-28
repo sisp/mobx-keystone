@@ -1,5 +1,5 @@
 import { assertTweakedObject } from "../tweaker/core"
-import { objectChildren } from "./core"
+import { objectChildrenProp } from "./core"
 
 /**
  * Returns all the children objects (this is, excluding primitives) of an object.
@@ -10,5 +10,5 @@ import { objectChildren } from "./core"
 export function getChildrenObjects(node: object): Set<any> {
   assertTweakedObject(node, "node")
 
-  return objectChildren.get(node)!
+  return objectChildrenProp.get(node)!
 }

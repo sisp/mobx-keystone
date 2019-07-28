@@ -1,6 +1,6 @@
 import { action, createAtom, IAtom, untracked } from "mobx"
 import { getParentPath, ParentPath } from "../parent/path"
-import { debugFreeze } from "../utils"
+import { debugFreeze, objectHiddenProperty } from "../utils"
 import { SnapshotOutOf } from "./SnapshotOf"
 
 interface SnapshotData<T extends object> {
@@ -8,7 +8,7 @@ interface SnapshotData<T extends object> {
   readonly atom: IAtom
 }
 
-const snapshots = new WeakMap<Object, SnapshotData<any>>()
+const snapshotsProp = objectHiddenProperty<SnapshotData<any>>("snapshots")
 
 /**
  * @ignore
@@ -16,7 +16,7 @@ const snapshots = new WeakMap<Object, SnapshotData<any>>()
 export function getInternalSnapshot<T extends object>(
   value: T
 ): Readonly<SnapshotData<T>> | undefined {
-  return snapshots.get(value) as any
+  return snapshotsProp.get(value) as any
 }
 
 function getInternalSnapshotParent(
@@ -72,7 +72,7 @@ export const setInternalSnapshot = action(
         atom: createAtom("snapshot"),
       }
 
-      snapshots.set(value, sn)
+      snapshotsProp.set(value, sn)
     }
 
     sn.atom.reportChanged()
@@ -106,14 +106,14 @@ export const setInternalSnapshot = action(
  * @ignore
  */
 export function linkInternalSnapshot(value: object, snapshot: Readonly<SnapshotData<any>>) {
-  snapshots.set(value, snapshot)
+  snapshotsProp.set(value, snapshot)
 }
 
 /**
  * @ignore
  */
 export function unlinkInternalSnapshot(value: object) {
-  return snapshots.delete(value)
+  return snapshotsProp.delete(value)
 }
 
 /**

@@ -1,12 +1,12 @@
 import { ParentPath } from "../parent/path"
 import { setParent } from "../parent/setParent"
-import { tweakedObjects } from "./core"
+import { tweakedObjectProp } from "./core"
 
 /**
  * @ignore
  */
 export function tweakModel<T>(value: T, parentPath: ParentPath<any> | undefined): T {
-  tweakedObjects.add(value)
+  tweakedObjectProp.set(value as any, true)
   setParent(value, parentPath)
 
   // nothing to do for models, data is already proxified and its parent is set

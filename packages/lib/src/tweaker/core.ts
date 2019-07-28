@@ -1,18 +1,18 @@
 import { runInAction } from "mobx"
 import { getCurrentActionContext } from "../action/context"
 import { getActionProtection } from "../action/protection"
-import { failure, isPrimitive } from "../utils"
+import { failure, isPrimitive, objectHiddenProperty } from "../utils"
 
 /**
  * @ignore
  */
-export const tweakedObjects = new WeakSet<Object>()
+export const tweakedObjectProp = objectHiddenProperty<true>("tweakedObject")
 
 /**
  * @ignore
  */
 export function isTweakedObject(value: any): value is Object {
-  return !isPrimitive(value) && tweakedObjects.has(value)
+  return !isPrimitive(value) && tweakedObjectProp.get(value) === true
 }
 
 /**

@@ -1,6 +1,6 @@
 import { getParent } from "../parent/path"
 import { isTweakedObject } from "../tweaker/core"
-import { failure } from "../utils"
+import { failure, objectHiddenProperty } from "../utils"
 import { TypeCheckError } from "./TypeCheckError"
 
 type CheckFunction = (value: any, path: ReadonlyArray<string | number>) => TypeCheckError | null
@@ -10,7 +10,9 @@ const emptyPath: ReadonlyArray<string | number> = []
 type CheckResult = TypeCheckError | null
 type CheckResultCache = WeakMap<object, CheckResult>
 
-const typeCheckersWithCachedResultsOfObject = new WeakMap<object, Set<TypeChecker>>()
+const typeCheckersWithCachedResultsOfObjectProp = objectHiddenProperty<Set<TypeChecker>>(
+  "typeCheckersWithCachedResultsOfObject"
+)
 
 /**
  * @ignore
@@ -19,12 +21,12 @@ export function invalidateCachedTypeCheckerResult(obj: object) {
   // we need to invalidate it for the object and all its parents
   let current: any = obj
   while (current) {
-    const set = typeCheckersWithCachedResultsOfObject.get(current)
+    const set = typeCheckersWithCachedResultsOfObjectProp.get(current)
     if (set) {
       for (const typeChecker of set) {
         typeChecker.invalidateCachedResult(current)
       }
-      typeCheckersWithCachedResultsOfObject.delete(current)
+      typeCheckersWithCachedResultsOfObjectProp.delete(current)
     }
 
     current = getParent(current)
@@ -50,10 +52,10 @@ export class TypeChecker {
     this.createCacheIfNeeded().set(obj, newCacheValue)
 
     // register this type checker as listener of that object changes
-    let typeCheckerSet = typeCheckersWithCachedResultsOfObject.get(obj)
+    let typeCheckerSet = typeCheckersWithCachedResultsOfObjectProp.get(obj)
     if (!typeCheckerSet) {
       typeCheckerSet = new Set()
-      typeCheckersWithCachedResultsOfObject.set(obj, typeCheckerSet)
+      typeCheckersWithCachedResultsOfObjectProp.set(obj, typeCheckerSet)
     }
 
     typeCheckerSet.add(this)

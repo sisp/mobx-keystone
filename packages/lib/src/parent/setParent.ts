@@ -6,8 +6,8 @@ import { isTweakedObject } from "../tweaker/core"
 import { failure, inDevMode, isPrimitive } from "../utils"
 import {
   getRootIdCache,
-  objectChildren,
-  objectParents,
+  objectChildrenProp,
+  objectParentProp,
   parentPathEquals,
   reportParentPathChanged,
 } from "./core"
@@ -41,8 +41,8 @@ export const setParent = action(
       }
     }
 
-    if (!objectChildren.has(value)) {
-      objectChildren.set(value, observable.set())
+    if (!objectChildrenProp.has(value)) {
+      objectChildrenProp.set(value, observable.set())
     }
 
     const oldParentPath = getParentPath(value)
@@ -57,7 +57,7 @@ export const setParent = action(
     if (oldParentPath && parentPath) {
       if (oldParentPath.parent === parentPath.parent && indexChangeAllowed) {
         // just changing the index
-        objectParents.set(value, parentPath)
+        objectParentProp.set(value, parentPath)
         reportParentPathChanged(value)
         return
       } else {
@@ -67,17 +67,17 @@ export const setParent = action(
 
     const removeFromOldParent = () => {
       if (oldParentPath && oldParentPath.parent) {
-        const children = objectChildren.get(oldParentPath.parent)!
+        const children = objectChildrenProp.get(oldParentPath.parent)!
         children.delete(value)
       }
     }
 
     const attachToNewParent = () => {
       if (parentPath && parentPath.parent) {
-        const children = objectChildren.get(parentPath.parent)!
+        const children = objectChildrenProp.get(parentPath.parent)!
         children.add(value)
       }
-      objectParents.set(value, parentPath)
+      objectParentProp.set(value, parentPath)
     }
 
     if (value instanceof Model) {

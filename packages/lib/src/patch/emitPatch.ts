@@ -2,7 +2,7 @@ import { action, isAction } from "mobx"
 import { Model } from "../model/Model"
 import { getParentPath } from "../parent/path"
 import { assertTweakedObject } from "../tweaker/core"
-import { assertIsFunction, deleteFromArray } from "../utils"
+import { assertIsFunction, deleteFromArray, objectHiddenProperty } from "../utils"
 import { Patch } from "./Patch"
 
 /**
@@ -45,7 +45,7 @@ export type OnGlobalPatchesListener = (
  */
 export type OnPatchesDisposer = () => void
 
-const patchListeners = new WeakMap<object, OnPatchesListener[]>()
+const patchListenersProp = objectHiddenProperty<OnPatchesListener[]>("patchListeners")
 const globalPatchListeners: OnGlobalPatchesListener[] = []
 
 /**
@@ -63,10 +63,10 @@ export function onPatches(subtreeRoot: object, listener: OnPatchesListener): OnP
     listener = action(listener.name || "onPatchesListener", listener)
   }
 
-  let listenersForObject = patchListeners.get(subtreeRoot)
+  let listenersForObject = patchListenersProp.get(subtreeRoot)
   if (!listenersForObject) {
     listenersForObject = []
-    patchListeners.set(subtreeRoot, listenersForObject)
+    patchListenersProp.set(subtreeRoot, listenersForObject)
   }
 
   listenersForObject.push(listener)
@@ -114,7 +114,7 @@ function emitPatch(
   }
 
   // then per subtree listeners
-  const listenersForObject = patchListeners.get(obj)
+  const listenersForObject = patchListenersProp.get(obj)
   if (listenersForObject) {
     for (let i = 0; i < listenersForObject.length; i++) {
       const listener = listenersForObject[i]

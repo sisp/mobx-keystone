@@ -1,10 +1,10 @@
 import { action } from "mobx"
 import { getRoot, isRoot } from "../parent/path"
 import { assertTweakedObject } from "../tweaker/core"
-import { failure } from "../utils"
+import { failure, isPrimitive, objectHiddenProperty } from "../utils"
 import { attachToRootStore, detachFromRootStore } from "./attachDetach"
 
-const rootStores = new WeakSet<object>()
+const rootStoreProp = objectHiddenProperty<true>("rootStore")
 
 /**
  * Registers a model / tree node object as a root store tree.
@@ -22,7 +22,7 @@ export const registerRootStore = action(
   <T extends object>(node: T): T => {
     assertTweakedObject(node, "node")
 
-    if (rootStores.has(node)) {
+    if (isRootStore(node)) {
       throw failure("object already marked as root store")
     }
 
@@ -30,7 +30,7 @@ export const registerRootStore = action(
       throw failure("a root store must not have a parent")
     }
 
-    rootStores.add(node)
+    rootStoreProp.set(node, true)
 
     attachToRootStore(node, node)
 
@@ -48,7 +48,7 @@ export const unregisterRootStore = action("unregisterRootStore", (node: object):
     throw failure("not a root store")
   }
 
-  rootStores.delete(node)
+  rootStoreProp.delete(node)
 
   detachFromRootStore(node)
 })
@@ -60,7 +60,7 @@ export const unregisterRootStore = action("unregisterRootStore", (node: object):
  * @returns
  */
 export function isRootStore(node: object): boolean {
-  return rootStores.has(node)
+  return !isPrimitive(node) && rootStoreProp.get(node) === true
 }
 
 /**
